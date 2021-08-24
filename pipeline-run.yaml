@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: build-go-code-run
+spec:
+  pipelineRef:
+    name: build-go-code
+  workspaces:
+  - name: shared-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Mi
+  params:
+  - name: repo-url
+    value: https://github.com/waxiangzi/samples.git
+  # - name: branch-name
+  #   value: release-v0.12.x
+  resources:
+  - name: code
+    resourceRef:
+      name: sample

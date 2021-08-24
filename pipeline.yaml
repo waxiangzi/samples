@@ -1,0 +1,53 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-go-code
+spec:
+  # resources:
+  #   inputs:
+  #   - name: code
+  #     type: git
+  params:
+  - name: repo-url
+    type: string
+  - name: branch-name
+    type: string
+    default: "master"
+  tasks:
+  - name: fetch-repo
+    taskRef:
+      name: git-clone
+    workspaces:
+    - name: source
+      workspace: shared-data
+    params:
+    - name: url
+      value: $(params.repo-url)
+    - name: revision
+      value: $(params.branch-name)
+  - name: cat-readme
+    runAfter: ["fetch-repo"]  # Wait until the clone is done before reading the readme.
+    workspaces:
+    - name: source
+      workspace: shared-data
+    taskSpec:
+      workspaces:
+      - name: source
+      steps:
+      - image: alpine
+        script: |
+          #!/usr/bin/env sh
+          cat $(workspaces.source.path)/main.go
+  - name: golang-build
+    taskRef:
+      name: golang-build
+    workspaces:
+    - name: source
+      workspace: shared-data
+    params:
+    - name: package
+      value: samples/main.go
+  workspaces:
+    - name: shared-data
+      description: The folder where we write the message to
+      # mountPath: /custom/path/relative/to/root
